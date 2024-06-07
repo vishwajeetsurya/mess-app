@@ -9,20 +9,11 @@ mongoose.connect(process.env.MONGO_URL)
 const app = express()
 app.use(express.json())
 
-const corsOptions = {
-    origin: true, // Reflect the request origin, making it dynamic
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-};
 
-app.use(cors(corsOptions));
+app.use(cors());
 
-// Handle preflight requests
-app.options('*', cors(corsOptions));
 
 app.use(cookieParser())
-
 
 app.use("/api/user", require("./routes/userRoutes"))
 app.use("/api/payment", require("./routes/paymentRoutes"))
@@ -35,7 +26,6 @@ app.use("*", (req, res) => {
 app.use((err, req, res, next) => {
     res.status(500).json({ message: err.message || "something went wrong" })
 })
-
 
 
 mongoose.connection.once("open", () => {
