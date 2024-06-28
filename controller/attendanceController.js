@@ -4,14 +4,10 @@ const MarkAttendance = require("../models/MarkAttendance");
 const moment = require("moment");
 const { mongoose } = require("mongoose");
 
-// Mark Attendance
-// const userId = req.user._id;
 exports.getAttendance = asyncHandler(async (req, res) => {
     const data = await MarkAttendance.find()
     res.status(200).json({ message: "Attendance found succcess", data });
-
 })
-
 exports.markAttendance = asyncHandler(async (req, res) => {
     const { mealType, present } = req.body;
     const userId = req.user._id;
@@ -43,8 +39,4 @@ exports.markAttendance = asyncHandler(async (req, res) => {
     });
 
     res.status(201).json({ message: "Attendance marked successfully", attendance });
-});
-
-
-
-
+})

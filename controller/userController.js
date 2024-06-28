@@ -32,8 +32,8 @@ exports.registerUser = asyncHandler(async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        startDate: utcStartDate, // Save as UTC date
-        endDate, // Set end date to one month from start date
+        startDate: utcStartDate,
+        endDate,
         monthlyFee,
         mealTimes,
         paidInAdvance,
@@ -46,7 +46,6 @@ exports.registerUser = asyncHandler(async (req, res) => {
     res.status(201).json({ message: "User registered successfully" });
 });
 
-// User login
 exports.loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!validator.isEmail(email) || !password) {
@@ -57,9 +56,9 @@ exports.loginUser = asyncHandler(async (req, res) => {
         return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_KEY, { expiresIn: "1d" });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY, { expiresIn: "1d" });
     res.cookie("user", token, { maxAge: 1000 * 60 * 60 * 24 });
-    res.status(200).json({ message: "User logged in successfully", result: user });
+    res.status(200).json({ message: "User logged in successfully", result: user, token })
 });
 
 // Update user profile
@@ -87,9 +86,9 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
-    const hashedOTP = await bcrypt.hash(otp, 10); // Hash the OTP using bcrypt
-    const resetPasswordExpires = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const hashedOTP = await bcrypt.hash(otp, 10);
+    const resetPasswordExpires = Date.now() + 10 * 60 * 1000;
 
     await User.findByIdAndUpdate(user._id, {
         resetPasswordOTP: hashedOTP,
