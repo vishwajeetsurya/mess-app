@@ -3,7 +3,6 @@ const validator = require("validator");
 const Payment = require("../models/Payment");
 const MarkAttendance = require("../models/MarkAttendance");
 const User = require("../models/User");
-const mongoose = require("mongoose");
 const moment = require("moment");
 
 exports.calculateMonthlyFees = asyncHandler(async (req, res) => {
@@ -86,4 +85,26 @@ exports.getPaymentHistory = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json({ message: "Payment history fetched successfully", payments });
+});
+
+
+exports.getOutstandingAmount = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    try {
+
+        const payments = await Payment.find({ user: userId });
+
+        if (!payments) {
+            return res.status(404).json({ success: false, message: 'No payments found for the user' })
+        }
+        let totalDueAmount = 0;
+        payments.forEach(payment => {
+            totalDueAmount += payment.dueAmount;
+        });
+
+        res.status(200).json({ success: true, dueAmount: totalDueAmount });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
 });

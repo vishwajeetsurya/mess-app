@@ -5,9 +5,11 @@ const moment = require("moment");
 const { mongoose } = require("mongoose");
 
 exports.getAttendance = asyncHandler(async (req, res) => {
-    const data = await MarkAttendance.find()
+    const userId = req.user._id;
+    const data = await MarkAttendance.find({ user: userId })
     res.status(200).json({ message: "Attendance found succcess", data });
 })
+
 exports.markAttendance = asyncHandler(async (req, res) => {
     const { mealType, present } = req.body;
     const userId = req.user._id;
@@ -40,3 +42,37 @@ exports.markAttendance = asyncHandler(async (req, res) => {
 
     res.status(201).json({ message: "Attendance marked successfully", attendance });
 })
+
+exports.updateAttendance = asyncHandler(async (req, res) => {
+    const { id } = req.params
+    const attendance = await MarkAttendance.findById(id)
+    if (!attendance) {
+        return res.status(404).json({ message: "attendance not found" })
+    }
+    await MarkAttendance.findByIdAndUpdate(id, req.body)
+    res.status(200).json({ message: "atttendance update success" })
+})
+
+exports.getAttendanceReport = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const { startDate, endDate } = req.body
+
+    try {
+        if (!startDate || !endDate) {
+            return res.status(400).json({ message: 'Start date and end date are required' });
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        const data = await MarkAttendance.find({
+            user: userId,
+            date: { $gte: start, $lte: end }
+        });
+
+        res.status(200).json({ message: 'Attendance found successfully', data });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch attendance' });
+    }
+});

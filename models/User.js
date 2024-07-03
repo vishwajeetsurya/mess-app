@@ -16,7 +16,13 @@ const userSchema = new mongoose.Schema({
     messOwnerPh: { type: String, required: true },
     paidInAdvance: { type: Number, default: 0 },
     resetPasswordOTP: String,
-    resetPasswordExpires: Date
+    resetPasswordExpires: Date,
+    pushToken: String,
+    notificationPreferences: {
+        lunchReminder: { type: Boolean, default: true },
+        dinnerReminder: { type: Boolean, default: true },
+        paymentReminder: { type: Boolean, default: true },
+    },
 });
 
 const calculateEndDate = (startDate, numberOfMonths) => {
