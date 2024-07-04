@@ -14,9 +14,9 @@ exports.registerUser = asyncHandler(async (req, res) => {
     console.log('Received registration data:', req.body);
 
     // Validate email and password
-    if (!validator.isEmail(email) || !validator.isStrongPassword(password, { minLength: 3 })) {
-        return res.status(400).json({ message: 'Invalid email or password format' });
-    }
+    // if (!validator.isEmail(email) || !validator.isStrongPassword(password, { minLength: 3 })) {
+    //     return res.status(400).json({ message: 'Invalid email or password format' });
+    // }
 
     // Validate start date format
     const parsedStartDate = moment(startDate, 'DD-MM-YYYY', true);
