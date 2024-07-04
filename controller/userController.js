@@ -1,27 +1,27 @@
-const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const validator = require("validator");
-const User = require("../models/User");
-const sendEmail = require("../utils/email");
-const moment = require("moment");
-const sendPushNotification = require("../utils/sendPushNotification")
+const asyncHandler = require('express-async-handler');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const validator = require('validator');
+const moment = require('moment');
+const User = require('../models/User');
+const sendPushNotification = require('../utils/sendPushNotification');
 
 // Function to register a new user
 exports.registerUser = asyncHandler(async (req, res) => {
-    const { name, email, password, startDate, monthlyFee, mealTimes, paidInAdvance, messOwnerPh,
+    const { name, email, password, startDate, monthlyFee, mealTimes, paidInAdvance, messOwnerPh, pushToken } = req.body;
 
-    } = req.body;
+    // Log received data
+    console.log('Received registration data:', req.body);
 
     // Validate email and password
-    // if (!validator.isEmail(email) || !validator.isStrongPassword(password)) {
-    //     return res.status(400).json({ message: "Invalid email or password format" });
-    // }
+    if (!validator.isEmail(email) || !validator.isStrongPassword(password, { minLength: 3 })) {
+        return res.status(400).json({ message: 'Invalid email or password format' });
+    }
 
     // Validate start date format
     const parsedStartDate = moment(startDate, 'DD-MM-YYYY', true);
     if (!parsedStartDate.isValid()) {
-        return res.status(400).json({ message: "Invalid start date format. Please use 'DD-MM-YYYY'." });
+        return res.status(400).json({ message: 'Invalid start date format. Please use "DD-MM-YYYY".' });
     }
 
     // Convert start date to UTC
@@ -30,7 +30,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
+        return res.status(400).json({ message: 'User already exists' });
     }
 
     // Hash password
@@ -58,16 +58,17 @@ exports.registerUser = asyncHandler(async (req, res) => {
         },
     });
 
-    const title = "Registration Successful";
-    const body = "Thank you for registering with us!";
+    // Send push notification to confirm registration
+    const title = 'Registration Successful';
+    const body = 'Thank you for registering with us!';
     await sendPushNotification(pushToken, title, body);
 
     // Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY, { expiresIn: "7d" });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY, { expiresIn: '7d' });
     res.cookie('user', token, { maxAge: 1000 * 60 * 60 * 24 });
 
     // Respond with success message
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({ message: 'User registered successfully' });
 });
 
 // Function to log in a user

@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
-const cron = require('node-cron');
-const moment = require('moment');
 
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    email: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
@@ -17,7 +15,7 @@ const userSchema = new mongoose.Schema({
     paidInAdvance: { type: Number, default: 0 },
     resetPasswordOTP: String,
     resetPasswordExpires: Date,
-    pushToken: String,
+    pushToken: { type: String, required: true },
     notificationPreferences: {
         lunchReminder: { type: Boolean, default: true },
         dinnerReminder: { type: Boolean, default: true },
@@ -40,7 +38,9 @@ const updateStartAndEndDate = async () => {
     });
 };
 
+const User = mongoose.model('User', userSchema);
+
+const cron = require('node-cron');
 cron.schedule('0 0 * * *', updateStartAndEndDate);
 
-const User = mongoose.model('User', userSchema);
 module.exports = User;
