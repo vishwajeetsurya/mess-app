@@ -7,7 +7,7 @@ router
     .get('/get', requireAuth, getAttendance)
     .post('/report', requireAuth, getAttendanceReport)
     .post('/mark', requireAuth, markAttendance)
-    .put('/update/:id', updateAttendance)
+    .put('/update/:id', requireAuth, updateAttendance)
 
 module.exports = router
 
