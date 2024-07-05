@@ -118,15 +118,11 @@ exports.getAttendanceReport = asyncHandler(async (req, res) => {
 
 
 exports.countPresentEntries = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
     try {
-        const presentCount = await MarkAttendance.aggregate([
-            { $match: { present: true } },
-            { $group: { _id: null, count: { $sum: 1 } } }
-        ]);
-
-        const count = presentCount.length > 0 ? presentCount[0].count : 0;
-
-        res.status(200).json({ message: 'Count of present entries retrieved successfully', count });
+        const presentCount = await MarkAttendance.countDocuments({ user: userId, present: true });
+        res.status(200).json({ message: 'Count of present entries retrieved successfully', count: presentCount });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to count present entries' });
