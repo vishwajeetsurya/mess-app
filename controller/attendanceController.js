@@ -14,6 +14,7 @@ exports.getAttendance = asyncHandler(async (req, res) => {
             const meals = entry.meals;
 
             formattedAttendance[date] = {
+                _id: entry._id,
                 lunch: meals.lunch.present ? 'Present' : 'Absent',
                 dinner: meals.dinner.present ? 'Present' : 'Absent',
             };
@@ -55,7 +56,7 @@ exports.markAttendance = asyncHandler(async (req, res) => {
 
 // Update Attendance
 exports.updateAttendance = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params
     const { mealType, present } = req.body;
 
     try {
