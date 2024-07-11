@@ -1,9 +1,8 @@
-const asyncHandler = require("express-async-handler");
-const User = require("../models/User");
-const MarkAttendance = require("../models/MarkAttendance");
-const moment = require("moment");
-const { mongoose } = require("mongoose");
+const asyncHandler = require('express-async-handler');
+const User = require('../models/User');
+const MarkAttendance = require('../models/MarkAttendance');
 
+// Get Attendance
 exports.getAttendance = asyncHandler(async (req, res) => {
     try {
         const userId = req.user._id;
@@ -11,90 +10,90 @@ exports.getAttendance = asyncHandler(async (req, res) => {
 
         const formattedAttendance = {};
         attendanceData.forEach((entry) => {
-            const date = entry.date.toISOString().split('T')[0]; // Extract date in 'YYYY-MM-DD' format
-            const mealType = entry.meal;
-            const attendanceStatus = entry.present ? 'Present' : 'Absent';
+            const date = entry.date.toISOString().split('T')[0];
+            const meals = entry.meals;
 
-            if (!formattedAttendance[date]) {
-                formattedAttendance[date] = { lunch: '', dinner: '' };
-            }
-
-            formattedAttendance[date][mealType] = attendanceStatus;
+            formattedAttendance[date] = {
+                lunch: meals.lunch ? (meals.lunch.present ? 'Present' : 'Absent') : '',
+                dinner: meals.dinner ? (meals.dinner.present ? 'Present' : 'Absent') : '',
+            };
         });
 
         res.status(200).json({ message: 'Attendance found successfully', data: formattedAttendance });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching attendance data', error });
     }
-})
+});
 
-
-
+// Mark Attendance
 exports.markAttendance = asyncHandler(async (req, res) => {
     const { mealType, present } = req.body;
     const userId = req.user._id;
     const currentDate = new Date().toISOString().split('T')[0];
 
     if (!['lunch', 'dinner'].includes(mealType)) {
-        return res.status(400).json({ message: "Invalid meal type" });
+        return res.status(400).json({ message: 'Invalid meal type' });
     }
 
+    // Fetch user by ID
     const user = await User.findById(userId);
     if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: 'User not found' });
     }
 
-    const existingAttendance = await MarkAttendance.findOne({ user: userId, date: currentDate, meal: mealType });
-    if (existingAttendance) {
-        return res.status(400).json({ message: "Attendance already marked for today" });
+    // Find or create attendance record for the current day
+    let attendance = await MarkAttendance.findOne({ user: userId, date: currentDate });
+    if (!attendance) {
+        attendance = new MarkAttendance({ user: userId, date: currentDate, meals: {} });
     }
 
-
+    // Calculate fee per meal
     const feePerMeal = present ? user.monthlyFee / 60 : 0;
 
-    const attendance = await MarkAttendance.create({
-        user: userId,
-        date: currentDate,
-        meal: mealType,
-        present,
-        feePerMeal
-    });
+    // Update the attendance record for the specified meal type
+    attendance.meals[mealType] = { present, feePerMeal };
 
-    res.status(201).json({ message: "Attendance marked successfully", attendance });
-})
+    // Save the updated attendance record
+    await attendance.save();
+
+    res.status(201).json({ message: 'Attendance marked successfully', attendance });
+});
+
 
 exports.updateAttendance = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { present } = req.body;
+    const { mealType, present } = req.body;
 
     try {
         const attendance = await MarkAttendance.findById(id);
         if (!attendance) {
-            return res.status(404).json({ message: "Attendance not found" });
+            return res.status(404).json({ message: 'Attendance not found' });
         }
 
         const user = await User.findById(attendance.user);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        let feePerMeal = 0;
-        if (present) {
-            feePerMeal = user.monthlyFee / 60;
-        }
+        const feePerMeal = present ? user.monthlyFee / 60 : 0;
 
-        await MarkAttendance.findByIdAndUpdate(id, { ...req.body, feePerMeal });
+        // Update the specific meal type
+        attendance.meals[mealType] = { present, feePerMeal };
 
-        res.status(200).json({ message: "Attendance update successful" });
+        // Save the updated attendance record
+        await attendance.save();
+
+        res.status(200).json({ message: 'Attendance update successful' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to update attendance' });
     }
 });
 
+
 exports.getAttendanceReport = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-    const { startDate, endDate } = req.body
+    const { startDate, endDate } = req.body;
 
     try {
         if (!startDate || !endDate) {
@@ -114,15 +113,24 @@ exports.getAttendanceReport = asyncHandler(async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Failed to fetch attendance' });
     }
-})
+});
 
 
+
+
+// Count Present Entries
 exports.countPresentEntries = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
     try {
-        const presentCount = await MarkAttendance.countDocuments({ user: userId, present: true });
-        res.status(200).json({ message: 'Count of present entries retrieved successfully', count: presentCount });
+        const presentCount = await MarkAttendance.aggregate([
+            { $match: { user: mongoose.Types.ObjectId(userId) } },
+            { $group: { _id: null, count: { $sum: { $cond: [{ $or: ['$meals.lunch.present', '$meals.dinner.present'] }, 1, 0] } } } }
+        ]);
+
+        const count = presentCount.length > 0 ? presentCount[0].count : 0;
+
+        res.status(200).json({ message: 'Count of present entries retrieved successfully', count });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to count present entries' });

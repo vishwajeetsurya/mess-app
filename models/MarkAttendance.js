@@ -1,29 +1,19 @@
-const mongoose = require("mongoose")
+const mongoose = require('mongoose');
 
-const attendanceSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-    date: {
-        type: Date,
-        required: true
-    },
-    meal: {
-        type: String,
-        enum: ["lunch", "dinner"],
-        required: true
-    },
-    present: {
-        type: Boolean,
-        default: false,
-        required: true
-    },
-    feePerMeal: {
-        type: Number,
-        required: true
+const MarkAttendanceSchema = new mongoose.Schema({
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    date: { type: Date, required: true },
+    meals: {
+        lunch: {
+            present: { type: Boolean, default: false },
+            feePerMeal: { type: Number, default: 0 }
+        },
+        dinner: {
+            present: { type: Boolean, default: false },
+            feePerMeal: { type: Number, default: 0 }
+        }
     }
-})
+});
 
-module.exports = mongoose.model("atttendence", attendanceSchema)
+const MarkAttendance = mongoose.model('attendance', MarkAttendanceSchema);
+module.exports = MarkAttendance;
