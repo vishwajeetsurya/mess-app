@@ -14,8 +14,8 @@ exports.getAttendance = asyncHandler(async (req, res) => {
             const meals = entry.meals;
 
             formattedAttendance[date] = {
-                lunch: meals.lunch ? (meals.lunch.present ? 'Present' : 'Absent') : '',
-                dinner: meals.dinner ? (meals.dinner.present ? 'Present' : 'Absent') : '',
+                lunch: meals.lunch.present ? 'Present' : 'Absent',
+                dinner: meals.dinner.present ? 'Present' : 'Absent',
             };
         });
 
@@ -35,31 +35,25 @@ exports.markAttendance = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: 'Invalid meal type' });
     }
 
-    // Fetch user by ID
     const user = await User.findById(userId);
     if (!user) {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    // Find or create attendance record for the current day
     let attendance = await MarkAttendance.findOne({ user: userId, date: currentDate });
     if (!attendance) {
         attendance = new MarkAttendance({ user: userId, date: currentDate, meals: {} });
     }
 
-    // Calculate fee per meal
     const feePerMeal = present ? user.monthlyFee / 60 : 0;
-
-    // Update the attendance record for the specified meal type
     attendance.meals[mealType] = { present, feePerMeal };
 
-    // Save the updated attendance record
     await attendance.save();
 
     res.status(201).json({ message: 'Attendance marked successfully', attendance });
 });
 
-
+// Update Attendance
 exports.updateAttendance = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { mealType, present } = req.body;
@@ -76,21 +70,18 @@ exports.updateAttendance = asyncHandler(async (req, res) => {
         }
 
         const feePerMeal = present ? user.monthlyFee / 60 : 0;
-
-        // Update the specific meal type
         attendance.meals[mealType] = { present, feePerMeal };
 
-        // Save the updated attendance record
         await attendance.save();
 
-        res.status(200).json({ message: 'Attendance update successful' });
+        res.status(200).json({ message: 'Attendance update successful', attendance });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to update attendance' });
     }
 });
 
-
+// Get Attendance Report
 exports.getAttendanceReport = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const { startDate, endDate } = req.body;
@@ -114,9 +105,6 @@ exports.getAttendanceReport = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Failed to fetch attendance' });
     }
 });
-
-
-
 
 // Count Present Entries
 exports.countPresentEntries = asyncHandler(async (req, res) => {
