@@ -56,33 +56,46 @@ exports.markAttendance = asyncHandler(async (req, res) => {
 
 // Update Attendance
 exports.updateAttendance = asyncHandler(async (req, res) => {
-    const { id } = req.params
+    const { id } = req.params;
     const { mealType, present } = req.body;
+
+    console.log(`Received update request for ID: ${id}`);
+    console.log(`Request body:`, req.body);
 
     try {
         const attendance = await MarkAttendance.findById(id);
         if (!attendance) {
+            console.log('Attendance not found');
             return res.status(404).json({ message: 'Attendance not found' });
         }
 
+        console.log('Attendance found:', attendance);
+
         const user = await User.findById(attendance.user);
         if (!user) {
+            console.log('User not found');
             return res.status(404).json({ message: 'User not found' });
         }
+
+        console.log('User found:', user);
 
         const feePerMeal = present ? user.monthlyFee / 60 : 0;
         attendance.meals[mealType] = { present, feePerMeal };
 
         await attendance.save();
 
+        console.log('Attendance updated successfully:', attendance);
         res.status(200).json({ message: 'Attendance update successful', attendance });
     } catch (error) {
-        console.error(error);
+        console.error('Error during update:', error);
         res.status(500).json({ message: 'Failed to update attendance' });
     }
 });
 
 // Get Attendance Report
+
+
+
 exports.getAttendanceReport = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const { startDate, endDate } = req.body;
