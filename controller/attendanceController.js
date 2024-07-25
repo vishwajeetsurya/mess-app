@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const MarkAttendance = require('../models/MarkAttendance');
+const { default: mongoose } = require('mongoose');
 
 // Get Attendance
 exports.getAttendance = asyncHandler(async (req, res) => {
@@ -123,18 +124,22 @@ exports.getAttendanceReport = asyncHandler(async (req, res) => {
 // Count Present Entries
 exports.countPresentEntries = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-
     try {
-        const presentCount = await MarkAttendance.aggregate([
-            { $match: { user: mongoose.Types.ObjectId(userId) } },
-            { $group: { _id: null, count: { $sum: { $cond: [{ $or: ['$meals.lunch.present', '$meals.dinner.present'] }, 1, 0] } } } }
-        ]);
-
-        const count = presentCount.length > 0 ? presentCount[0].count : 0;
-
+        const presentEntries = await MarkAttendance.find({
+            user: new mongoose.Types.ObjectId(userId),
+            $or: [
+                { 'meals.lunch.present': true },
+                { 'meals.dinner.present': true }
+            ]
+        });
+        const count = presentEntries.reduce((acc, entry) => {
+            return acc + (entry.meals.lunch.present ? 1 : 0) + (entry.meals.dinner.present ? 1 : 0);
+        }, 0);
         res.status(200).json({ message: 'Count of present entries retrieved successfully', count });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to count present entries' });
     }
-});
+})
+
+
