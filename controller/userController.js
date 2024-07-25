@@ -64,7 +64,7 @@ exports.registerUser = asyncHandler(async (req, res) => {
     await sendPushNotification(pushToken, title, body);
 
     // Generate JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_KEY, { expiresIn: '365d' });
     res.cookie('user', token, { maxAge: 1000 * 60 * 60 * 24 });
 
     // Respond with success message
