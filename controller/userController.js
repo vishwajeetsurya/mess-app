@@ -6,12 +6,9 @@ const moment = require('moment');
 const User = require('../models/User');
 const sendPushNotification = require('../utils/sendPushNotification');
 
-// Function to register a new user
 exports.registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, startDate, monthlyFee, mealTimes, paidInAdvance, messOwnerPh, pushToken } = req.body;
 
-    // Log received data
-    console.log('Received registration data:', req.body);
 
     // Validate email and password
     // if (!validator.isEmail(email) || !validator.isStrongPassword(password, { minLength: 3 })) {
@@ -91,7 +88,14 @@ exports.loginUser = asyncHandler(async (req, res) => {
     // Respond with user data
     res.status(200).json({
         message: "User logged in successfully",
-        result: { _id: user._id, name: user.name, email: user.email }
+        result: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            startDate: user.startDate,
+            endDate: user.endDate,
+            mealTimes: user.mealTimes,
+        }
     });
 })
 
