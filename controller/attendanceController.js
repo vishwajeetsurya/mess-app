@@ -3,7 +3,6 @@ const User = require('../models/User');
 const MarkAttendance = require('../models/MarkAttendance');
 const { default: mongoose } = require('mongoose');
 
-// Get Attendance
 exports.getAttendance = asyncHandler(async (req, res) => {
     try {
         const userId = req.user._id;
@@ -27,7 +26,6 @@ exports.getAttendance = asyncHandler(async (req, res) => {
     }
 });
 
-// Mark Attendance
 exports.markAttendance = asyncHandler(async (req, res) => {
     const { mealType, present } = req.body;
     const userId = req.user._id;
@@ -55,7 +53,6 @@ exports.markAttendance = asyncHandler(async (req, res) => {
     res.status(201).json({ message: 'Attendance marked successfully', attendance });
 });
 
-// Update Attendance
 exports.updateAttendance = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { mealType, present } = req.body;
@@ -93,10 +90,6 @@ exports.updateAttendance = asyncHandler(async (req, res) => {
     }
 });
 
-// Get Attendance Report
-
-
-
 exports.getAttendanceReport = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     const { startDate, endDate } = req.body;
@@ -121,7 +114,6 @@ exports.getAttendanceReport = asyncHandler(async (req, res) => {
     }
 });
 
-// Count Present Entries
 exports.countPresentEntries = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     try {
@@ -141,5 +133,45 @@ exports.countPresentEntries = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Failed to count present entries' });
     }
 })
+
+
+
+exports.getOutstandingAmount = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    // Fetch the user data to get startDate and paidInAdvance
+    const user = await User.findById(userId).select('paidInAdvance startDate');
+    if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    console.log(user);
+
+    const startDate = new Date(user.startDate);
+    const currentDate = new Date();
+
+    const attendanceRecords = await MarkAttendance.find({
+        user: userId,
+        date: { $gte: startDate, $lte: currentDate }
+    });
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+        return res.status(404).json({ success: false, message: 'No attendance records found for the user' });
+    }
+
+
+    let totalFees = 0;
+    attendanceRecords.forEach(record => {
+        if (record.meals.lunch.present) {
+            totalFees += record.meals.lunch.feePerMeal;
+        }
+        if (record.meals.dinner.present) {
+            totalFees += record.meals.dinner.feePerMeal;
+        }
+    });
+
+    totalFees -= user.paidInAdvance;
+
+    res.status(200).json({ message: "your fess till day is ", dueAmount: totalFees });
+});
 
 

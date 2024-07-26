@@ -86,23 +86,3 @@ exports.getPaymentHistory = asyncHandler(async (req, res) => {
 });
 
 
-exports.getOutstandingAmount = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-
-    const payments = await Payment.find({ user: userId });
-
-    if (!payments || payments.length === 0) {
-        return res.status(404).json({ success: false, message: 'No payments found for the user' });
-    }
-
-    const user = await User.findById(userId).select('paidInAdvance');
-
-    let totalDueAmount = 0;
-    payments.forEach(payment => {
-        totalDueAmount += payment.dueAmount;
-    });
-
-    totalDueAmount -= user.paidInAdvance;
-
-    res.status(200).json({ success: true, dueAmount: totalDueAmount });
-});
