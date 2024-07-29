@@ -8,15 +8,28 @@ const paymentSchema = new mongoose.Schema({
     },
     date: {
         type: Date,
+        default: Date.now,
         required: true
     },
-    dueAmount: {
+    amount: {
         type: Number,
         required: true
     },
-    transactionId: {
+    transactionRef: {
         type: String,
+        required: function () {
+            return this.paymentType === 'online';
+        }
+    },
+    paymentType: {
+        type: String,
+        enum: ['online', 'offline'],
         required: true
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'completed', 'failed'],
+        default: 'completed'
     }
 });
 

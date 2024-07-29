@@ -1,9 +1,10 @@
 const asyncHandler = require("express-async-handler");
 const validator = require("validator");
 const Payment = require("../models/Payment");
-const MarkAttendance = require("../models/MarkAttendance");
 const User = require("../models/User");
 const moment = require("moment");
+const markAttendance = require("../models/markAttendance");
+
 
 exports.calculateMonthlyFees = asyncHandler(async (req, res) => {
     const userId = req.user._id;
@@ -16,49 +17,50 @@ exports.calculateMonthlyFees = asyncHandler(async (req, res) => {
     const startDate = moment(user.startDate).startOf('day');
     const endDate = startDate.clone().add(1, 'month').endOf('day');
 
-    console.log(`Start Date: ${startDate}, End Date: ${endDate}`);
-
-    const attendanceRecords = await MarkAttendance.find({
+    const attendanceRecords = await markAttendance.find({
         user: userId,
         date: {
             $gte: startDate,
             $lte: endDate
         }
     });
-    const totalFee = attendanceRecords.reduce((sum, record) => sum + record.feePerMeal, 0);
-    console.log("Total Fee:", totalFee);
 
-    // Update or create a payment record for the user
-    await Payment.updateOne(
-        { user: userId },
-        { dueAmount: totalFee },
-        { upsert: true }
-    );
+    const totalFee = attendanceRecords.reduce((sum, record) => {
+        const lunchFee = record.meals.lunch.present ? record.meals.lunch.feePerMeal : 0;
+        const dinnerFee = record.meals.dinner.present ? record.meals.dinner.feePerMeal : 0;
+        return sum + lunchFee + dinnerFee;
+    }, 0);
 
-    res.status(200).json({ message: "Fees calculated successfully for 30 days from start date", totalFee });
+    res.status(200).json({
+        message: "Fees calculated successfully for 30 days from start date",
+        totalFee,
+        messOwnerPh: user.messOwnerPh
+    });
 });
 
 exports.makePayment = asyncHandler(async (req, res) => {
     const userId = req.user._id;
+    const { paymentType, transactionRef, amount } = req.body;
 
-    const paymentRecord = await Payment.findOne({ user: userId });
-    if (!paymentRecord) {
-        return res.status(404).json({ message: "No due amount found for user" });
+    if (!paymentType || !['online', 'offline'].includes(paymentType)) {
+        return res.status(400).json({ message: "Invalid payment type." });
     }
 
-    const amount = paymentRecord.dueAmount;
-
-    paymentRecord.transactionHistory.push({
-        transactionId,
+    const paymentData = {
+        user: userId,
         amount,
+        paymentType,
+        transactionRef: paymentType === 'online' ? transactionRef : null,
+        status: 'completed',
         date: new Date()
-    });
+    };
 
-    paymentRecord.dueAmount = 0;
-    await paymentRecord.save();
+    await Payment.create(paymentData);
 
-    res.status(201).json({ message: "Payment recorded successfully", payment: paymentRecord });
+    res.status(200).json({ message: "Payment recorded successfully." });
 });
+
+
 
 exports.getPaymentHistory = asyncHandler(async (req, res) => {
     const userId = req.user._id;

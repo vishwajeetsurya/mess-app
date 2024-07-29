@@ -1,4 +1,4 @@
-const { getPaymentHistory, calculateMonthlyFees, makePayment } = require("../controller/paymentController")
+const { getPaymentHistory, makePayment, calculateMonthlyFees } = require("../controller/paymentController")
 const { requireAuth } = require("../middleware/protected")
 
 const router = require("express").Router()
