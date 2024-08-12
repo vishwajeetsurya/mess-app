@@ -5,6 +5,7 @@ const validator = require('validator')
 const moment = require('moment')
 const User = require('../models/User')
 const sendPushNotification = require('../utils/sendPushNotification')
+const markAttendance = require('../models/markAttendance')
 
 exports.registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, startDate, monthlyFee, mealTimes, paidInAdvance, messOwnerPh, pushToken } = req.body;
@@ -195,7 +196,7 @@ exports.resetMessData = asyncHandler(async (req, res) => {
                 paidInAdvance: ""
             }
         });
-        await MarkAttendance.deleteMany({ user: userId });
+        await markAttendance.deleteMany({ user: userId });
         res.status(200).send({ message: "Specified fields deleted from the user and all attendance records deleted." });
     } catch (error) {
         res.status(500).send({ error: "Error resetting mess data and deleting attendance records: " + error.message });
