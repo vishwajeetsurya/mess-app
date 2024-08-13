@@ -1,13 +1,13 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const { default: mongoose } = require('mongoose');
-const MarkAttendance = require('../models/markAttendance');
+const Attendance = require('../models/Attendance');
 
 
 exports.getAttendance = asyncHandler(async (req, res) => {
     try {
         const userId = req.user._id;
-        const attendanceData = await MarkAttendance.find({ user: userId });
+        const attendanceData = await Attendance.find({ user: userId });
 
         const formattedAttendance = {};
         attendanceData.forEach((entry) => {
@@ -41,9 +41,9 @@ exports.markAttendance = asyncHandler(async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    let attendance = await MarkAttendance.findOne({ user: userId, date: currentDate });
+    let attendance = await Attendance.findOne({ user: userId, date: currentDate });
     if (!attendance) {
-        attendance = new MarkAttendance({ user: userId, date: currentDate, meals: {} });
+        attendance = new Attendance({ user: userId, date: currentDate, meals: {} });
     }
 
     const feePerMeal = present ? user.monthlyFee / 60 : 0;
@@ -62,7 +62,7 @@ exports.updateAttendance = asyncHandler(async (req, res) => {
     console.log(`Request body:`, req.body);
 
     try {
-        const attendance = await MarkAttendance.findById(id);
+        const attendance = await Attendance.findById(id);
         if (!attendance) {
             console.log('Attendance not found');
             return res.status(404).json({ message: 'Attendance not found' });
@@ -103,7 +103,7 @@ exports.getAttendanceReport = asyncHandler(async (req, res) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
 
-        const data = await MarkAttendance.find({
+        const data = await Attendance.find({
             user: userId,
             date: { $gte: start, $lte: end }
         });
@@ -118,7 +118,7 @@ exports.getAttendanceReport = asyncHandler(async (req, res) => {
 exports.countPresentEntries = asyncHandler(async (req, res) => {
     const userId = req.user._id;
     try {
-        const presentEntries = await MarkAttendance.find({
+        const presentEntries = await Attendance.find({
             user: new mongoose.Types.ObjectId(userId),
             $or: [
                 { 'meals.lunch.present': true },
@@ -150,7 +150,7 @@ exports.getOutstandingAmount = asyncHandler(async (req, res) => {
     const startDate = new Date(user.startDate);
     const currentDate = new Date();
 
-    const attendanceRecords = await MarkAttendance.find({
+    const attendanceRecords = await Attendance.find({
         user: userId,
         date: { $gte: startDate, $lte: currentDate }
     });
@@ -190,7 +190,7 @@ exports.resetMessData = asyncHandler(async (req, res) => {
                 paidInAdvance: ""
             }
         });
-        await MarkAttendance.deleteMany({ user: userId });
+        await Attendance.deleteMany({ user: userId });
         res.status(200).send({ message: "Specified fields deleted from the user and all attendance records deleted." });
     } catch (error) {
         res.status(500).send({ error: "Error resetting mess data and deleting attendance records: " + error.message });

@@ -3,7 +3,7 @@ const validator = require("validator");
 const Payment = require("../models/Payment");
 const User = require("../models/User");
 const moment = require("moment");
-const MarkAttendance = require("../models/markAttendance");
+const Attendance = require("../models/Attendance");
 
 
 exports.calculateMonthlyFees = asyncHandler(async (req, res) => {
@@ -17,7 +17,7 @@ exports.calculateMonthlyFees = asyncHandler(async (req, res) => {
     const startDate = moment(user.startDate).startOf('day');
     const endDate = startDate.clone().add(1, 'month').endOf('day');
 
-    const attendanceRecords = await MarkAttendance.find({
+    const attendanceRecords = await Attendance.find({
         user: userId,
         date: {
             $gte: startDate,
