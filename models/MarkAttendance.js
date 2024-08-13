@@ -15,4 +15,4 @@ const MarkAttendanceSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('MarkAttendance', MarkAttendanceSchema);
+module.exports = mongoose.model('MarkAttendance', MarkAttendanceSchema)
