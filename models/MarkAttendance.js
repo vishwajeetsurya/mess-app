@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-
+const mongoose = require('mongoose')
 const MarkAttendanceSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     date: { type: Date, required: true },
@@ -14,5 +13,4 @@ const MarkAttendanceSchema = new mongoose.Schema({
         }
     }
 });
-
-module.exports = mongoose.model('MarkAttendance', MarkAttendanceSchema)
+module.exports = mongoose.model('MarkAttendance', MarkAttendanceSchema);
