@@ -6,7 +6,7 @@ const router = require("express").Router()
 router
     .post("/register", registerUser)
     .post("/login", loginUser)
-    .post("/reset", requireAuth, resetMessData)
+    .post("/resetmess", requireAuth, resetMessData)
     .put("/update/:id", updateUserProfile)
     .put("/reset", resetPassword)
     .post("/forgot", forgotPassword)

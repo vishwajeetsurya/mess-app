@@ -1,11 +1,22 @@
-const asyncHandler = require('express-async-handler')
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
-const validator = require('validator')
-const moment = require('moment')
-const User = require('../models/User')
-const sendPushNotification = require('../utils/sendPushNotification')
-const MarkAttendance = require('../models/markAttendance');
+const path = require('path');
+
+console.log('Current directory:', __dirname);
+console.log('Looking for model at:', path.join(__dirname, '../models/markAttendance'));
+
+const asyncHandler = require('express-async-handler');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const validator = require('validator');
+const moment = require('moment');
+const User = require('../models/User');
+const sendPushNotification = require('../utils/sendPushNotification');
+const markAttendance = require('../models/markAttendance');
+try {
+    const markAttendance = require('../models/markAttendance');
+    console.log('MarkAttendance model imported successfully.');
+} catch (error) {
+    console.error('Error importing MarkAttendance model:', error);
+}
 
 exports.registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, startDate, monthlyFee, mealTimes, paidInAdvance, messOwnerPh, pushToken } = req.body;
@@ -196,7 +207,7 @@ exports.resetMessData = asyncHandler(async (req, res) => {
                 paidInAdvance: ""
             }
         });
-        await MarkAttendance.deleteMany({ user: userId });
+        await markAttendance.deleteMany({ user: userId });
         res.status(200).send({ message: "Specified fields deleted from the user and all attendance records deleted." });
     } catch (error) {
         res.status(500).send({ error: "Error resetting mess data and deleting attendance records: " + error.message });
