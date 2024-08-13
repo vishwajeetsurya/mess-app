@@ -5,7 +5,7 @@ const validator = require('validator')
 const moment = require('moment')
 const User = require('../models/User')
 const sendPushNotification = require('../utils/sendPushNotification')
-const MarkAttendance = require('../models/markAttendance')
+const MarkAttendance = require('../models/markAttendance');
 
 exports.registerUser = asyncHandler(async (req, res) => {
     const { name, email, password, startDate, monthlyFee, mealTimes, paidInAdvance, messOwnerPh, pushToken } = req.body;
