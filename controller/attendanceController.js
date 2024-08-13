@@ -176,3 +176,23 @@ exports.getOutstandingAmount = asyncHandler(async (req, res) => {
 });
 
 
+exports.resetMessData = asyncHandler(async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        await User.updateOne({ _id: userId }, {
+            $unset: {
+                startDate: "",
+                endDate: "",
+                monthlyFee: "",
+                mealTimes: "",
+                messOwnerPh: "",
+                paidInAdvance: ""
+            }
+        });
+        await MarkAttendance.deleteMany({ user: userId });
+        res.status(200).send({ message: "Specified fields deleted from the user and all attendance records deleted." });
+    } catch (error) {
+        res.status(500).send({ error: "Error resetting mess data and deleting attendance records: " + error.message });
+    }
+})
