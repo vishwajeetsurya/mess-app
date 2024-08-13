@@ -1,12 +1,13 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const { default: mongoose } = require('mongoose');
-const markAttendance = require('../models/markAttendance');
+const MarkAttendance = require('../models/markAttendance');
+
 
 exports.getAttendance = asyncHandler(async (req, res) => {
     try {
         const userId = req.user._id;
-        const attendanceData = await markAttendance.find({ user: userId });
+        const attendanceData = await MarkAttendance.find({ user: userId });
 
         const formattedAttendance = {};
         attendanceData.forEach((entry) => {
